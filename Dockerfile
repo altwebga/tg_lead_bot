@@ -1,4 +1,5 @@
-FROM node:20-alpine
+# Этап 1 — сборка
+FROM node:20-alpine AS builder
 
 WORKDIR /app
 
@@ -10,7 +11,16 @@ COPY src ./src
 
 RUN npm run build
 
+# Этап 2 — продакшен (только собранный код)
+FROM node:20-alpine AS runner
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm install --omit=dev
+
+COPY --from=builder /app/dist ./dist
+
 ENV NODE_ENV=production
-ENV NODE_OPTIONS="--max-old-space-size=256"
 
 CMD ["node", "dist/bot.js"]
