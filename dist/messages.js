@@ -29,7 +29,7 @@ function contactMessage(order, escape) {
         `<b>Услуга:</b> ${escape(order.service ?? "-")}\n` +
         `<b>Бюджет:</b> ${escape(order.budget ?? "-")}\n\n` +
         "<b>Шаг 4 из 4</b>\n" +
-        "Оставьте контакт: имя и телефон или @username в Telegram.");
+        "Оставьте телефон или нажмите кнопку ниже, чтобы поделиться контактом.");
 }
 function adminLeadMessage(order, user, escape) {
     const fullName = [user.first_name, user.last_name].filter(Boolean).join(" ");

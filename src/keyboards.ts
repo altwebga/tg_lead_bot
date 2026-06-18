@@ -1,7 +1,5 @@
-import { InlineKeyboard } from "grammy";
+import { InlineKeyboard, Keyboard } from "grammy";
 import { ServiceType, BudgetType } from "./types";
-
-export const CANCEL_CALLBACK = "cancel_order";
 
 // Типизированные callback_data — никаких строк вручную
 export const SERVICE_CALLBACKS: Record<string, ServiceType> = {
@@ -11,6 +9,7 @@ export const SERVICE_CALLBACKS: Record<string, ServiceType> = {
   service_ads: "Контекстная реклама",
   service_design: "Дизайн и брендинг",
   service_smm: "SMM-продвижение",
+  service_unknown: "Не знаю, посоветуйте вы",
   service_fix: "Обслуживание сайтов",
   service_all: "Разработка сайтов",
 };
@@ -24,17 +23,16 @@ export const BUDGET_CALLBACKS: Record<string, BudgetType> = {
 };
 
 export const serviceKeyboard = new InlineKeyboard()
-  .text("🌐 Разработка сайтов", "service_dev")
+  .text("🌐 Сайты", "service_dev")
+  .text("🛠 Обслуживание", "service_support")
   .row()
-  .text("🛠 Обслуживание сайтов", "service_support")
+  .text("📈 SEO", "service_seo")
+  .text("🎯 Реклама", "service_ads")
   .row()
-  .text("📈 SEO-продвижение", "service_seo")
+  .text("🎨 Дизайн", "service_design")
+  .text("📱 SMM", "service_smm")
   .row()
-  .text("🎯 Контекстная реклама", "service_ads")
-  .row()
-  .text("🎨 Дизайн и брендинг", "service_design")
-  .row()
-  .text("📱 SMM-продвижение", "service_smm");
+  .text("❓ Не знаю, посоветуйте вы", "service_unknown");
 
 export const budgetKeyboard = new InlineKeyboard()
   .text("до 30 000 ₽", "budget_30")
@@ -43,11 +41,9 @@ export const budgetKeyboard = new InlineKeyboard()
   .text("100–300 000 ₽", "budget_300")
   .text("300 000+ ₽", "budget_300plus")
   .row()
-  .text("❓ Пока не знаю", "budget_unknown")
-  .row()
-  .text("✕ Отменить заявку", CANCEL_CALLBACK);
+  .text("❓ Пока не знаю", "budget_unknown");
 
-export const cancelKeyboard = new InlineKeyboard().text(
-  "✕ Отменить заявку",
-  CANCEL_CALLBACK,
-);
+export const contactKeyboard = new Keyboard()
+  .requestContact("📞 Поделиться телефоном")
+  .resized()
+  .oneTime();

@@ -6,10 +6,9 @@ import { config } from "./config";
 import { BotContext, BotSession, OrderData } from "./types";
 import {
   BUDGET_CALLBACKS,
-  CANCEL_CALLBACK,
   SERVICE_CALLBACKS,
   budgetKeyboard,
-  cancelKeyboard,
+  contactKeyboard,
   serviceKeyboard,
 } from "./keyboards";
 import {
@@ -68,47 +67,78 @@ async function startOrder(ctx: BotContext) {
   });
 }
 
+async function submitOrder(ctx: BotContext, contact: string) {
+  const user = ctx.from;
+  const order = ctx.session.order;
+  order.contact = contact;
+
+  const { service, description, budget } = order;
+  if (!user || !service || !description || !budget || !contact) {
+    ctx.session = initialSession();
+    await ctx.reply("Что-то пошло не так. Начните заново: /start", {
+      reply_markup: { remove_keyboard: true },
+    });
+    return;
+  }
+
+  const adminMessage = adminLeadMessage(
+    { service, description, budget, contact },
+    user,
+    escapeHtml,
+  );
+
+  try {
+    await ctx.api.sendMessage(config.adminChatId, adminMessage, {
+      parse_mode: "HTML",
+    });
+  } catch (error) {
+    console.error("Не удалось отправить заявку админу", error);
+    ctx.session = initialSession();
+    await ctx.reply(
+      "Не удалось отправить заявку. Попробуйте ещё раз или напишите напрямую: @sib_kos",
+      { reply_markup: { remove_keyboard: true } },
+    );
+    return;
+  }
+
+  ctx.session = initialSession();
+  await ctx.reply(successMessage(), {
+    parse_mode: "HTML",
+    reply_markup: { remove_keyboard: true },
+  });
+}
+
 bot.use(session({ initial: initialSession }));
 
 bot.command("start", startOrder);
 
 bot.command("cancel", async (ctx) => {
   ctx.session = initialSession();
-  await ctx.reply(
-    "Заявка отменена. Чтобы начать заново, отправьте /start",
-  );
-});
-
-bot.callbackQuery(CANCEL_CALLBACK, async (ctx) => {
-  ctx.session = initialSession();
-
-  await ctx.answerCallbackQuery("Заявка отменена");
-  await ctx.editMessageReplyMarkup().catch(() => undefined);
   await ctx.reply("Заявка отменена. Чтобы начать заново, отправьте /start");
 });
 
-bot.callbackQuery(Object.keys(SERVICE_CALLBACKS), async (ctx) => {
+bot.on("callback_query:data", async (ctx) => {
   const data = ctx.callbackQuery.data;
+
   const service = SERVICE_CALLBACKS[data];
 
-  if (!service) {
-    await ctx.answerCallbackQuery("Выберите один из вариантов");
+  if (service) {
+    ctx.session.step = "description";
+    ctx.session.order.service = service;
+
+    await ctx.answerCallbackQuery();
+    await ctx
+      .editMessageText(descriptionMessage(service, escapeHtml), {
+        parse_mode: "HTML",
+      })
+      .catch(async () => {
+        await ctx.reply(descriptionMessage(service, escapeHtml), {
+          parse_mode: "HTML",
+        });
+      });
     return;
   }
 
-  ctx.session.step = "description";
-  ctx.session.order.service = service;
-
-  await ctx.answerCallbackQuery();
-  await ctx.editMessageReplyMarkup().catch(() => undefined);
-  await ctx.reply(descriptionMessage(service, escapeHtml), {
-    parse_mode: "HTML",
-    reply_markup: cancelKeyboard,
-  });
-});
-
-bot.callbackQuery(Object.keys(BUDGET_CALLBACKS), async (ctx) => {
-  const data = ctx.callbackQuery.data;
   const budget = BUDGET_CALLBACKS[data];
 
   if (!budget) {
@@ -125,11 +155,33 @@ bot.callbackQuery(Object.keys(BUDGET_CALLBACKS), async (ctx) => {
   ctx.session.order.budget = budget;
 
   await ctx.answerCallbackQuery();
-  await ctx.editMessageReplyMarkup().catch(() => undefined);
-  await ctx.reply(contactMessage(ctx.session.order, escapeHtml), {
-    parse_mode: "HTML",
-    reply_markup: cancelKeyboard,
+  await ctx
+    .editMessageText(contactMessage(ctx.session.order, escapeHtml), {
+      parse_mode: "HTML",
+    })
+    .catch(async () => {
+      await ctx.reply(contactMessage(ctx.session.order, escapeHtml), {
+        parse_mode: "HTML",
+      });
+    });
+  await ctx.reply("Можно отправить номер одной кнопкой:", {
+    reply_markup: contactKeyboard,
   });
+});
+
+bot.on("message:contact", async (ctx) => {
+  if (ctx.session.step !== "contact") {
+    await ctx.reply("Напишите /start чтобы оставить заявку 👇", {
+      reply_markup: { remove_keyboard: true },
+    });
+    return;
+  }
+
+  const contact = ctx.message.contact;
+  const fullName = [contact.first_name, contact.last_name].filter(Boolean).join(" ");
+  const phone = contact.phone_number;
+
+  await submitOrder(ctx, fullName ? `${fullName}, ${phone}` : phone);
 });
 
 bot.on("message:text", async (ctx) => {
@@ -170,38 +222,7 @@ bot.on("message:text", async (ctx) => {
       return;
     }
 
-    const user = ctx.from;
-    const order = ctx.session.order;
-    order.contact = text;
-
-    const { service, description, budget, contact } = order;
-    if (!user || !service || !description || !budget || !contact) {
-      ctx.session = initialSession();
-      await ctx.reply("Что-то пошло не так. Начните заново: /start");
-      return;
-    }
-
-    const adminMessage = adminLeadMessage(
-      { service, description, budget, contact },
-      user,
-      escapeHtml,
-    );
-
-    try {
-      await ctx.api.sendMessage(config.adminChatId, adminMessage, {
-        parse_mode: "HTML",
-      });
-    } catch (error) {
-      console.error("Не удалось отправить заявку админу", error);
-      ctx.session = initialSession();
-      await ctx.reply(
-        "Не удалось отправить заявку. Попробуйте ещё раз или напишите напрямую: @sib_kos",
-      );
-      return;
-    }
-
-    ctx.session = initialSession();
-    await ctx.reply(successMessage(), { parse_mode: "HTML" });
+    await submitOrder(ctx, text);
     return;
   }
 
