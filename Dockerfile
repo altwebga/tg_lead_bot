@@ -11,5 +11,6 @@ COPY src ./src
 RUN npm run build
 
 ENV NODE_ENV=production
+ENV NODE_OPTIONS="--max-old-space-size=256"
 
 CMD ["node", "dist/bot.js"]
