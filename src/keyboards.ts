@@ -1,12 +1,18 @@
 import { InlineKeyboard } from "grammy";
 import { ServiceType, BudgetType } from "./types";
 
+export const CANCEL_CALLBACK = "cancel_order";
+
 // Типизированные callback_data — никаких строк вручную
 export const SERVICE_CALLBACKS: Record<string, ServiceType> = {
-  service_dev: "Разработка сайта",
-  service_seo: "SEO и продвижение",
-  service_fix: "Доработка сайта",
-  service_all: "Комплекс услуг",
+  service_dev: "Разработка сайтов",
+  service_support: "Обслуживание сайтов",
+  service_seo: "SEO-продвижение сайтов",
+  service_ads: "Контекстная реклама",
+  service_design: "Дизайн и брендинг",
+  service_smm: "SMM-продвижение",
+  service_fix: "Обслуживание сайтов",
+  service_all: "Разработка сайтов",
 };
 
 export const BUDGET_CALLBACKS: Record<string, BudgetType> = {
@@ -18,13 +24,17 @@ export const BUDGET_CALLBACKS: Record<string, BudgetType> = {
 };
 
 export const serviceKeyboard = new InlineKeyboard()
-  .text("🌐 Разработка сайта", "service_dev")
+  .text("🌐 Разработка сайтов", "service_dev")
   .row()
-  .text("📈 SEO / реклама", "service_seo")
+  .text("🛠 Обслуживание сайтов", "service_support")
   .row()
-  .text("🔧 Доработка сайта", "service_fix")
+  .text("📈 SEO-продвижение", "service_seo")
   .row()
-  .text("📦 Всё сразу", "service_all");
+  .text("🎯 Контекстная реклама", "service_ads")
+  .row()
+  .text("🎨 Дизайн и брендинг", "service_design")
+  .row()
+  .text("📱 SMM-продвижение", "service_smm");
 
 export const budgetKeyboard = new InlineKeyboard()
   .text("до 30 000 ₽", "budget_30")
@@ -33,4 +43,11 @@ export const budgetKeyboard = new InlineKeyboard()
   .text("100–300 000 ₽", "budget_300")
   .text("300 000+ ₽", "budget_300plus")
   .row()
-  .text("❓ Не знаю", "budget_unknown");
+  .text("❓ Пока не знаю", "budget_unknown")
+  .row()
+  .text("✕ Отменить заявку", CANCEL_CALLBACK);
+
+export const cancelKeyboard = new InlineKeyboard().text(
+  "✕ Отменить заявку",
+  CANCEL_CALLBACK,
+);

@@ -6,10 +6,20 @@ import { config } from "./config";
 import { BotContext, BotSession, OrderData } from "./types";
 import {
   BUDGET_CALLBACKS,
+  CANCEL_CALLBACK,
   SERVICE_CALLBACKS,
   budgetKeyboard,
+  cancelKeyboard,
   serviceKeyboard,
 } from "./keyboards";
+import {
+  adminLeadMessage,
+  budgetMessage,
+  contactMessage,
+  descriptionMessage,
+  successMessage,
+  welcomeMessage,
+} from "./messages";
 
 const apiTimeoutMs = 20_000;
 const retryDelayMs = 5_000;
@@ -52,10 +62,10 @@ function wait(ms: number): Promise<void> {
 
 async function startOrder(ctx: BotContext) {
   resetOrder(ctx);
-  await ctx.reply(
-    "👋 Привет! Я помогу оставить заявку на разработку или продвижение сайта.\n\nЧто вас интересует?",
-    { reply_markup: serviceKeyboard },
-  );
+  await ctx.reply(welcomeMessage(), {
+    parse_mode: "HTML",
+    reply_markup: serviceKeyboard,
+  });
 }
 
 bot.use(session({ initial: initialSession }));
@@ -64,6 +74,16 @@ bot.command("start", startOrder);
 
 bot.command("cancel", async (ctx) => {
   ctx.session = initialSession();
+  await ctx.reply(
+    "Заявка отменена. Чтобы начать заново, отправьте /start",
+  );
+});
+
+bot.callbackQuery(CANCEL_CALLBACK, async (ctx) => {
+  ctx.session = initialSession();
+
+  await ctx.answerCallbackQuery("Заявка отменена");
+  await ctx.editMessageReplyMarkup().catch(() => undefined);
   await ctx.reply("Заявка отменена. Чтобы начать заново, отправьте /start");
 });
 
@@ -81,10 +101,10 @@ bot.callbackQuery(Object.keys(SERVICE_CALLBACKS), async (ctx) => {
 
   await ctx.answerCallbackQuery();
   await ctx.editMessageReplyMarkup().catch(() => undefined);
-  await ctx.reply(`✅ Выбрано: <b>${escapeHtml(service)}</b>`, {
+  await ctx.reply(descriptionMessage(service, escapeHtml), {
     parse_mode: "HTML",
+    reply_markup: cancelKeyboard,
   });
-  await ctx.reply("📝 Опишите вашу задачу или проект (пара слов — достаточно):");
 });
 
 bot.callbackQuery(Object.keys(BUDGET_CALLBACKS), async (ctx) => {
@@ -106,10 +126,10 @@ bot.callbackQuery(Object.keys(BUDGET_CALLBACKS), async (ctx) => {
 
   await ctx.answerCallbackQuery();
   await ctx.editMessageReplyMarkup().catch(() => undefined);
-  await ctx.reply(`✅ Бюджет: <b>${escapeHtml(budget)}</b>`, {
+  await ctx.reply(contactMessage(ctx.session.order, escapeHtml), {
     parse_mode: "HTML",
+    reply_markup: cancelKeyboard,
   });
-  await ctx.reply("📞 Оставьте контакт: имя и телефон или @username в Telegram:");
 });
 
 bot.on("message:text", async (ctx) => {
@@ -130,7 +150,10 @@ bot.on("message:text", async (ctx) => {
 
     ctx.session.order.description = text;
     ctx.session.step = "budget";
-    await ctx.reply("💰 Примерный бюджет?", { reply_markup: budgetKeyboard });
+    await ctx.reply(budgetMessage(ctx.session.order, escapeHtml), {
+      parse_mode: "HTML",
+      reply_markup: budgetKeyboard,
+    });
     return;
   }
 
@@ -158,13 +181,11 @@ bot.on("message:text", async (ctx) => {
       return;
     }
 
-    const adminMessage =
-      `🔔 <b>Новая заявка!</b>\n\n` +
-      `👤 От: ${escapeHtml(user.first_name)} ${escapeHtml(user.last_name ?? "")} (@${escapeHtml(user.username ?? "нет")})\n` +
-      `🛠 Услуга: ${escapeHtml(service)}\n` +
-      `📋 Задача: ${escapeHtml(description)}\n` +
-      `💰 Бюджет: ${escapeHtml(budget)}\n` +
-      `📞 Контакт: ${escapeHtml(contact)}`;
+    const adminMessage = adminLeadMessage(
+      { service, description, budget, contact },
+      user,
+      escapeHtml,
+    );
 
     try {
       await ctx.api.sendMessage(config.adminChatId, adminMessage, {
@@ -180,10 +201,7 @@ bot.on("message:text", async (ctx) => {
     }
 
     ctx.session = initialSession();
-    await ctx.reply(
-      "✅ Заявка принята! Свяжемся с вами в течение 1 рабочего дня.\n\n" +
-        "Если срочно — напишите напрямую: @sib_kos",
-    );
+    await ctx.reply(successMessage(), { parse_mode: "HTML" });
     return;
   }
 
