@@ -1,4 +1,4 @@
-import { Context, Scenes } from "telegraf";
+import { Context, SessionFlavor } from "grammy";
 
 // Услуги которые предлагает агентство
 export type ServiceType =
@@ -23,19 +23,11 @@ export interface OrderData {
   contact?: string;
 }
 
-// Сессия wizard-сцены с нашими данными
-export interface OrderWizardSession extends Scenes.WizardSessionData {
+export type OrderStep = "idle" | "service" | "description" | "budget" | "contact";
+
+export interface BotSession {
+  step: OrderStep;
   order: OrderData;
 }
 
-// Расширяем сессию Telegraf
-export interface BotSession extends Scenes.WizardSession<OrderWizardSession> {
-  order?: OrderData; // добавь ?
-}
-
-// Контекст бота с нашей сессией
-export type BotContext = Context & {
-  session: BotSession;
-  scene: Scenes.SceneContextScene<BotContext, OrderWizardSession>;
-  wizard: Scenes.WizardContextWizard<BotContext>;
-};
+export type BotContext = Context & SessionFlavor<BotSession>;
