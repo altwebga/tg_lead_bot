@@ -1,9 +1,9 @@
-FROM node:20-alpine
+FROM oven/bun:alpine
 
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm install --omit=dev
+RUN bun install --production
 
 COPY dist ./dist
 
