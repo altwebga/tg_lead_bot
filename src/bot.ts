@@ -1,16 +1,15 @@
 import "dotenv/config";
 import { Bot, session } from "grammy";
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const { SocksProxyAgent } = require("socks-proxy-agent");
-import { config } from "./config";
-import { BotContext, BotSession, OrderData } from "./types";
+import { SocksProxyAgent } from "socks-proxy-agent";
+import { config } from "./config.js";
+import type { BotContext, BotSession, OrderData } from "./types.js";
 import {
   BUDGET_CALLBACKS,
   SERVICE_CALLBACKS,
   budgetKeyboard,
   contactKeyboard,
   serviceKeyboard,
-} from "./keyboards";
+} from "./keyboards.js";
 import {
   adminLeadMessage,
   budgetMessage,
@@ -18,7 +17,7 @@ import {
   descriptionMessage,
   successMessage,
   welcomeMessage,
-} from "./messages";
+} from "./messages.js";
 
 const apiTimeoutMs = 20_000;
 const retryDelayMs = 5_000;

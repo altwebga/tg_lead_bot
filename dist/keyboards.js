@@ -1,9 +1,6 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.contactKeyboard = exports.budgetKeyboard = exports.serviceKeyboard = exports.BUDGET_CALLBACKS = exports.SERVICE_CALLBACKS = void 0;
-const grammy_1 = require("grammy");
+import { InlineKeyboard, Keyboard } from "grammy";
 // Типизированные callback_data — никаких строк вручную
-exports.SERVICE_CALLBACKS = {
+export const SERVICE_CALLBACKS = {
     service_dev: "Разработка сайтов",
     service_support: "Обслуживание сайтов",
     service_seo: "SEO-продвижение сайтов",
@@ -14,14 +11,14 @@ exports.SERVICE_CALLBACKS = {
     service_fix: "Обслуживание сайтов",
     service_all: "Разработка сайтов",
 };
-exports.BUDGET_CALLBACKS = {
+export const BUDGET_CALLBACKS = {
     budget_30: "до 30 000 ₽",
     budget_100: "30–100 000 ₽",
     budget_300: "100–300 000 ₽",
     budget_300plus: "300 000+ ₽",
     budget_unknown: "Не знаю",
 };
-exports.serviceKeyboard = new grammy_1.InlineKeyboard()
+export const serviceKeyboard = new InlineKeyboard()
     .text("🌐 Сайты", "service_dev")
     .text("🛠 Обслуживание", "service_support")
     .row()
@@ -32,7 +29,7 @@ exports.serviceKeyboard = new grammy_1.InlineKeyboard()
     .text("📱 SMM", "service_smm")
     .row()
     .text("❓ Не знаю, посоветуйте вы", "service_unknown");
-exports.budgetKeyboard = new grammy_1.InlineKeyboard()
+export const budgetKeyboard = new InlineKeyboard()
     .text("до 30 000 ₽", "budget_30")
     .text("30–100 000 ₽", "budget_100")
     .row()
@@ -40,7 +37,7 @@ exports.budgetKeyboard = new grammy_1.InlineKeyboard()
     .text("300 000+ ₽", "budget_300plus")
     .row()
     .text("❓ Пока не знаю", "budget_unknown");
-exports.contactKeyboard = new grammy_1.Keyboard()
+export const contactKeyboard = new Keyboard()
     .requestContact("📞 Поделиться телефоном")
     .resized()
     .oneTime();

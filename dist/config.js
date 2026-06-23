@@ -1,7 +1,4 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.config = void 0;
-require("dotenv/config");
+import "dotenv/config";
 const { BOT_TOKEN, ADMIN_CHAT_ID, PROXY_URL } = process.env;
 if (!BOT_TOKEN) {
     throw new Error("BOT_TOKEN не задан в .env");
@@ -62,7 +59,7 @@ function normalizeProxyUrl(proxyUrl) {
         throw error;
     }
 }
-exports.config = {
+export const config = {
     botToken: BOT_TOKEN,
     adminChatId: parsedAdminChatId,
     proxyUrl: normalizeProxyUrl(PROXY_URL),

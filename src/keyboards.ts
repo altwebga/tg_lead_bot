@@ -1,5 +1,5 @@
 import { InlineKeyboard, Keyboard } from "grammy";
-import { ServiceType, BudgetType } from "./types";
+import type { ServiceType, BudgetType } from "./types.js";
 
 // Типизированные callback_data — никаких строк вручную
 export const SERVICE_CALLBACKS: Record<string, ServiceType> = {

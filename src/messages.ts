@@ -1,4 +1,4 @@
-import { OrderData } from "./types";
+import type { OrderData } from "./types.js";
 
 type Escape = (value: string) => string;
 

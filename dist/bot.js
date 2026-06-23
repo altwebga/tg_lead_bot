@@ -1,19 +1,16 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-require("dotenv/config");
-const grammy_1 = require("grammy");
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const { SocksProxyAgent } = require("socks-proxy-agent");
-const config_1 = require("./config");
-const keyboards_1 = require("./keyboards");
-const messages_1 = require("./messages");
+import "dotenv/config";
+import { Bot, session } from "grammy";
+import { SocksProxyAgent } from "socks-proxy-agent";
+import { config } from "./config.js";
+import { BUDGET_CALLBACKS, SERVICE_CALLBACKS, budgetKeyboard, contactKeyboard, serviceKeyboard, } from "./keyboards.js";
+import { adminLeadMessage, budgetMessage, contactMessage, descriptionMessage, successMessage, welcomeMessage, } from "./messages.js";
 const apiTimeoutMs = 20000;
 const retryDelayMs = 5000;
 const allowedUpdates = ["message", "callback_query"];
-const agent = config_1.config.proxyUrl
-    ? new SocksProxyAgent(config_1.config.proxyUrl, { timeout: apiTimeoutMs })
+const agent = config.proxyUrl
+    ? new SocksProxyAgent(config.proxyUrl, { timeout: apiTimeoutMs })
     : undefined;
-const bot = new grammy_1.Bot(config_1.config.botToken, {
+const bot = new Bot(config.botToken, {
     client: {
         baseFetchConfig: agent ? { agent: agent } : undefined,
     },
@@ -40,9 +37,9 @@ function wait(ms) {
 }
 async function startOrder(ctx) {
     resetOrder(ctx);
-    await ctx.reply((0, messages_1.welcomeMessage)(), {
+    await ctx.reply(welcomeMessage(), {
         parse_mode: "HTML",
-        reply_markup: keyboards_1.serviceKeyboard,
+        reply_markup: serviceKeyboard,
     });
 }
 async function submitOrder(ctx, contact) {
@@ -57,9 +54,9 @@ async function submitOrder(ctx, contact) {
         });
         return;
     }
-    const adminMessage = (0, messages_1.adminLeadMessage)({ service, description, budget, contact }, user, escapeHtml);
+    const adminMessage = adminLeadMessage({ service, description, budget, contact }, user, escapeHtml);
     try {
-        await ctx.api.sendMessage(config_1.config.adminChatId, adminMessage, {
+        await ctx.api.sendMessage(config.adminChatId, adminMessage, {
             parse_mode: "HTML",
         });
     }
@@ -70,12 +67,12 @@ async function submitOrder(ctx, contact) {
         return;
     }
     ctx.session = initialSession();
-    await ctx.reply((0, messages_1.successMessage)(), {
+    await ctx.reply(successMessage(), {
         parse_mode: "HTML",
         reply_markup: { remove_keyboard: true },
     });
 }
-bot.use((0, grammy_1.session)({ initial: initialSession }));
+bot.use(session({ initial: initialSession }));
 bot.command("start", startOrder);
 bot.command("cancel", async (ctx) => {
     ctx.session = initialSession();
@@ -83,23 +80,23 @@ bot.command("cancel", async (ctx) => {
 });
 bot.on("callback_query:data", async (ctx) => {
     const data = ctx.callbackQuery.data;
-    const service = keyboards_1.SERVICE_CALLBACKS[data];
+    const service = SERVICE_CALLBACKS[data];
     if (service) {
         ctx.session.step = "description";
         ctx.session.order.service = service;
         await ctx.answerCallbackQuery();
         await ctx
-            .editMessageText((0, messages_1.descriptionMessage)(service, escapeHtml), {
+            .editMessageText(descriptionMessage(service, escapeHtml), {
             parse_mode: "HTML",
         })
             .catch(async () => {
-            await ctx.reply((0, messages_1.descriptionMessage)(service, escapeHtml), {
+            await ctx.reply(descriptionMessage(service, escapeHtml), {
                 parse_mode: "HTML",
             });
         });
         return;
     }
-    const budget = keyboards_1.BUDGET_CALLBACKS[data];
+    const budget = BUDGET_CALLBACKS[data];
     if (!budget) {
         await ctx.answerCallbackQuery("Выберите один из вариантов");
         return;
@@ -112,16 +109,16 @@ bot.on("callback_query:data", async (ctx) => {
     ctx.session.order.budget = budget;
     await ctx.answerCallbackQuery();
     await ctx
-        .editMessageText((0, messages_1.contactMessage)(ctx.session.order, escapeHtml), {
+        .editMessageText(contactMessage(ctx.session.order, escapeHtml), {
         parse_mode: "HTML",
     })
         .catch(async () => {
-        await ctx.reply((0, messages_1.contactMessage)(ctx.session.order, escapeHtml), {
+        await ctx.reply(contactMessage(ctx.session.order, escapeHtml), {
             parse_mode: "HTML",
         });
     });
     await ctx.reply("Можно отправить номер одной кнопкой:", {
-        reply_markup: keyboards_1.contactKeyboard,
+        reply_markup: contactKeyboard,
     });
 });
 bot.on("message:contact", async (ctx) => {
@@ -149,9 +146,9 @@ bot.on("message:text", async (ctx) => {
         }
         ctx.session.order.description = text;
         ctx.session.step = "budget";
-        await ctx.reply((0, messages_1.budgetMessage)(ctx.session.order, escapeHtml), {
+        await ctx.reply(budgetMessage(ctx.session.order, escapeHtml), {
             parse_mode: "HTML",
-            reply_markup: keyboards_1.budgetKeyboard,
+            reply_markup: budgetKeyboard,
         });
         return;
     }
